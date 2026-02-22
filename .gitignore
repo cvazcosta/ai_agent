@@ -14,3 +14,6 @@ wheels/
 
 # VS Code
 .vscode
+
+# Text files
+lorem.txt
