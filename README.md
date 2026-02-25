@@ -17,6 +17,14 @@ GEMINI_API_KEY='sua_chave_aqui'
 
 ## Instalação
 
+Para criação de um novo ambiente virtual:
+
+```sh
+uv venv
+```
+
+Para instalação das dependências necessárias:
+
 ```sh
 uv sync
 ```
@@ -24,5 +32,7 @@ uv sync
 ## Execução
 
 ```sh
-uv run main.py
+uv run main.py [prompt] <--verbose>
 ```
+
+O argumento `verbose` retorna a resposta juntamente com o prompt enviado, sua contagem de tokens e a contagem de tokens da resposta.
