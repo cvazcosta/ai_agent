@@ -26,7 +26,7 @@ def write_file(working_directory, file_path, content):
     return f"Error: {e}"
   
 schema_write_file = types.FunctionDeclaration(
-  name="write_files",
+  name="write_file",
   description="Write or overwrite files",
   parameters=types.Schema(
     type=types.Type.OBJECT,
