@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -25,14 +25,23 @@ response = client.models.generate_content(model="gemini-2.5-flash", contents=mes
 
 if not response.usage_metadata:
   raise RuntimeError("No usage metadata found: the API request probably failed")
-
-if args.verbose:
-  print(f"User prompt: {args.user_prompt}")
-  print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-  print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
   
 if response.function_calls:
+  function_results = []
   for function_call in response.function_calls:
-    print(f"Calling function: {function_call.name} ({function_call.args})")
+    #print(f"Calling function: {function_call.name} ({function_call.args})")
+    function_call_result = call_function(function_call)
+    if not function_call_result.parts:
+      raise Exception("Content object has a empty parts list")
+    if function_call_result.parts[0].function_response is None:
+      raise Exception("First item in the list of parts is None")
+    if function_call_result.parts[0].function_response.response is None:
+      raise Exception("Function result is None")
+    function_results.append(function_call_result.parts[0])
+  if args.verbose:
+    print(f"User prompt: {args.user_prompt}")
+    print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+    print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+    print(f"-> {function_call_result.parts[0].function_response.response}")    
 else:
   print(response.text)
