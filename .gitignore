@@ -15,6 +15,7 @@ wheels/
 # VS Code
 .vscode
 
-# Text files
+# Text or MD files
 lorem.txt
 morelorem.txt
+calculator/*.md
