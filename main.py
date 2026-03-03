@@ -21,27 +21,39 @@ args = parser.parse_args()
 
 messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
-response = client.models.generate_content(model="gemini-2.5-flash", contents=messages, config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt, temperature=0))
-
-if not response.usage_metadata:
-  raise RuntimeError("No usage metadata found: the API request probably failed")
+for i in range(20):
+  response = client.models.generate_content(model="gemini-2.5-flash", contents=messages, config=types.GenerateContentConfig(tools=[available_functions],system_instruction=system_prompt, temperature=0))
   
-if response.function_calls:
-  function_results = []
-  for function_call in response.function_calls:
-    #print(f"Calling function: {function_call.name} ({function_call.args})")
-    function_call_result = call_function(function_call)
-    if not function_call_result.parts:
-      raise Exception("Content object has a empty parts list")
-    if function_call_result.parts[0].function_response is None:
-      raise Exception("First item in the list of parts is None")
-    if function_call_result.parts[0].function_response.response is None:
-      raise Exception("Function result is None")
-    function_results.append(function_call_result.parts[0])
-  if args.verbose:
-    print(f"User prompt: {args.user_prompt}")
-    print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-    print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-    print(f"-> {function_call_result.parts[0].function_response.response}")    
-else:
-  print(response.text)
+  if response.candidates:
+    for candidates in response.candidates:
+      messages.append(candidates.content)
+
+  if not response.usage_metadata:
+    raise RuntimeError("No usage metadata found: the API request probably failed")
+    
+  if response.function_calls:
+    function_results = []
+    for function_call in response.function_calls:      
+      function_call_result = call_function(function_call)
+      if not function_call_result.parts:
+        raise Exception("Content object has a empty parts list")
+      if function_call_result.parts[0].function_response is None:
+        raise Exception("First item in the list of parts is None")
+      if function_call_result.parts[0].function_response.response is None:
+        raise Exception("Function result is None")
+      function_results.append(function_call_result.parts[0])
+    if args.verbose:
+      print(f"User prompt: {args.user_prompt}")
+      print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+      print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+      print(f"-> {function_call_result.parts[0].function_response.response}")
+          
+  else:
+    print(response.text)
+    break
+  
+  if i > 19:
+    print("The agent couldn't produce an answer in due time")
+    exit(1)
+  
+  messages.append(types.Content(role="user", parts=function_results))
